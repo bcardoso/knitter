@@ -30,21 +30,38 @@
 
 (require 'f)
 
-(defcustom ddf-directory (expand-file-name "~/dotfiles/")
-  "Dotfiles directory.")
+(defgroup ddf nil
+  "Group for `ddf' customizations."
+  :group 'ddf)
 
-(defcustom ddf-packages ;;(expand-file-name "packages.eld" ddf-directory)
-  (expand-file-name "~/projects/ddf/packages.eld")
-  "Dotfiles declarations.")
+(defcustom ddf-directory "~/dotfiles/"
+  "Dotfiles directory."
+  :type 'string)
 
-(defcustom ddf-overwrite-symlinks 1
-  "Overwrite existing dotfiles if t. If an integer, request confirmation.")
+(defcustom ddf-packages
+  (file-name-concat ddf-directory "packages.eld")
+  "Dotfiles declarations."
+  :type 'string)
 
-(defvar ddf-log-events t
-  "Log events.")
+(defcustom ddf-symlinks-relative nil
+  "Use relative instead of absolute symlinks."
+  :type 'boolean)
 
-(defvar ddf-log-buffer "*ddf-log*"
-  "Log buffer.")
+(defcustom ddf-symlinks-overwrite 1
+  "Overwrite existing dotfiles if t. If an integer, request confirmation."
+  :type 'symbol)
+
+(defcustom ddf-uninstall-first t
+  "Always uninstall declared host packages before installing them."
+  :type 'boolean)
+
+(defcustom ddf-log-events t
+  "Log events."
+  :type 'boolean)
+
+(defcustom ddf-log-buffer "*ddf-log*"
+  "Log buffer."
+  :type 'string)
 
 (defvar ddf-host-list nil
   "List of hosts declared in `ddf-packages' file.")
@@ -349,7 +366,7 @@ Overwrite symlinks if `ddf-symlinks-overwrite' is non-nil, which see."
 
 (cl-defmethod ddf-install-dotfiles ((host ddf-host))
   "Install packages at HOST directory."
-  (ddf-uninstall-dotfiles host)
+  (when ddf-uninstall-first (ddf-uninstall-dotfiles host))
   (ddf--make-directory (ddf-host-dir host))
   (when-let* ((dotfiles (ddf-host-dotfiles host))
               (directories (ddf--dotfiles-dirs dotfiles))
