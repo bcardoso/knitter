@@ -397,28 +397,41 @@ Overwrite symlinks if `ddf-symlinks-overwrite' is non-nil, which see."
 
 ;;;; Commands
 
+(defun ddf-do (action &optional arg)
+  "Dired for dotfiles. With ARG, reload packages."
+  (interactive "P")
+  (when (or arg (not ddf-pkg-list)) (ddf-load))
+  (pcase action
+    ('dired
+     (dired (expand-file-name (ddf-pkg-name (ddf-read 'pkg))
+                              ddf-directory)))
+    ('install
+     (ddf-install-dotfiles
+      (if arg (ddf-host-with-pkg) (ddf-read 'host))))
+    ('uninstall
+     (ddf-uninstall-dotfiles
+      (if arg (ddf-host-with-pkg) (ddf-read 'host))))))
+
+
 ;;;###autoload
 (defun ddf-dired (&optional arg)
   "Dired for dotfiles. With ARG, reload packages."
   (interactive "P")
-  (when (or arg (not ddf-pkg-list))
-    (ddf-load))
-  (dired (expand-file-name (ddf-pkg-name (ddf-read 'pkg))
-                           ddf-directory)))
+  (ddf-do 'dired arg))
 
 ;;;###autoload
 (defun ddf-install (&optional arg)
   "Install dotfiles for a host.
 With ARG, also prompt for a specific package."
   (interactive "P")
-  (ddf-install-dotfiles (if arg (ddf-host-with-pkg) (ddf-read 'host))))
+  (ddf-do 'install arg))
 
 ;;;###autoload
 (defun ddf-uninstall (&optional arg)
   "Uninstall dotfiles for a host.
 With ARG, also prompt for a specific package."
   (interactive)
-  (ddf-uninstall-dotfiles (if arg (ddf-host-with-pkg) (ddf-read 'host))))
+  (ddf-do 'uninstall arg))
 
 
 ;;; Provide
