@@ -335,7 +335,7 @@ Overwrite existing symlink if `ddf-overwrite-symlinks' is non-nil, which see."
          (directories (ddf--dotfiles-dirs dotfiles))
          (symlinks (ddf--dotfiles-symlinks dotfiles)))
     (when dotfiles
-      (ddf-log (format "Uninstalling dotfiles for host '%s'"
+      (ddf-log (format "Uninstalling dotfiles for '%s'..."
                        (ddf-host-name host)))
       (mapc #'ddf--delete-symlink symlinks)
       (mapc #'ddf--delete-directory directories))))
@@ -347,7 +347,7 @@ Overwrite existing symlink if `ddf-overwrite-symlinks' is non-nil, which see."
   (let* ((dotfiles (ddf-host-dotfiles host))
          (directories (ddf--dotfiles-dirs dotfiles)))
     (when dotfiles
-      (ddf-log (format "Installing dotfiles for host '%s'"
+      (ddf-log (format "Installing dotfiles for '%s'..."
                        (ddf-host-name host)))
       (mapc #'ddf--make-directory directories)
       (mapc #'ddf--make-symlink dotfiles))))
