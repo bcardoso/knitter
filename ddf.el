@@ -380,6 +380,14 @@ Overwrite symlinks if `ddf-symlinks-overwrite' is non-nil, which see."
     (mapc #'ddf--make-symlink dotfiles)
     (ddf-log (format "Dotfiles installed for '%s'." host-name) :echo)))
 
+(defun ddf-host-with-pkg (&optional host-name pkg-name)
+  "Overwrite HOST-NAME :pkgs list with PKG-NAME."
+  (let ((host (if host-name (ddf-get 'host host-name) (ddf-read 'host))))
+    (setf (ddf-host-pkgs host)
+          (list (or pkg-name (ddf-pkg-name (ddf-read 'pkg)))))
+    (ddf-load)
+    host))
+
 
 ;;;; Commands
 
@@ -393,16 +401,18 @@ Overwrite symlinks if `ddf-symlinks-overwrite' is non-nil, which see."
                            ddf-directory)))
 
 ;;;###autoload
-(defun ddf-install ()
-  "Install dotfiles for a host."
-  (interactive)
-  (ddf-install-dotfiles (ddf-read 'host)))
+(defun ddf-install (&optional arg)
+  "Install dotfiles for a host.
+With ARG, also prompt for a specific package."
+  (interactive "P")
+  (ddf-install-dotfiles (if arg (ddf-host-with-pkg) (ddf-read 'host))))
 
 ;;;###autoload
-(defun ddf-uninstall ()
-  "Uninstall dotfiles for a host."
+(defun ddf-uninstall (&optional arg)
+  "Uninstall dotfiles for a host.
+With ARG, also prompt for a specific package."
   (interactive)
-  (ddf-uninstall-dotfiles (ddf-read 'host)))
+  (ddf-uninstall-dotfiles (if arg (ddf-host-with-pkg) (ddf-read 'host))))
 
 
 ;;; Provide
