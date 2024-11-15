@@ -242,20 +242,20 @@
              (file-name-concat target-path sym))))
    files))
 
-(defun ddf-pkg--globs (globs pkg-path)
-  "Return a list of files that match GLOBS from PKG-PATH."
-  (let ((default-directory pkg-path)
-        (files-globs))
-    (mapc (lambda (g)
-            (mapc (lambda (f)
-                    (push (cons f (file-name-concat (cdr g)
-                                                    (f-filename f)))
-                          files-globs))
-                  (file-expand-wildcards (car g) t t)))
-          globs)
-    files-globs))
+(defun ddf-pkg--globs (globs pkg-path target-path)
+  "Return a list of files that match GLOBS from PKG-PATH to TARGET-PATH."
+  (let ((default-directory pkg-path))
+    (mapcan
+     (lambda (g)
+       (let ((glob (if (stringp g) g (car g)))
+             (dest (if (stringp g) target-path (cdr g))))
+         (mapcar (lambda (f)
+                   (cons (ddf--check-file f)
+                         (file-name-concat dest (f-filename f))))
+                 (file-expand-wildcards glob :full :regexp))))
+     globs)))
 
-(cl-defmethod ddf-pkg-symlinks ((pkg ddf-pkg))
+(cl-defmethod ddf-pkg-dotfiles ((pkg ddf-pkg))
   "Return a list of (source . symlink) for PKG."
   (let ((pkg-path (ddf-pkg-package-path pkg))
         (target-path (ddf-pkg-target-path pkg))
@@ -263,9 +263,10 @@
         (globs (ddf-pkg-globs pkg)))
     (if (and (not files) (not globs))
         (list (cons pkg-path target-path))
-      (append
-       (and files (ddf-pkg--files files pkg-path target-path))
-       (and globs (ddf-pkg--globs globs pkg-path))))))
+      (delete-dups
+       (append
+        (and files (ddf-pkg--files files pkg-path target-path))
+        (and globs (ddf-pkg--globs globs pkg-path target-path)))))))
 
 
 ;;;;; Parse host
@@ -284,7 +285,7 @@ Replace target path if host defines something different from \"~/\"."
                   (replace-regexp-in-string "^~"
                                             (ddf-host-dir host)
                                             (cdr s))))
-          (mapcan #'ddf-pkg-symlinks
+          (mapcan #'ddf-pkg-dotfiles
                   (mapcar (lambda (p) (ddf-get 'pkg p))
                           (ddf--check-list (ddf-host-pkgs host))))))
 
