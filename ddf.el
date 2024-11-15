@@ -95,8 +95,9 @@
 
 ;;; Load package declarations
 
-(defun ddf-log (log-msg)
-  "Write LOG-MSG to `ddf-log-buffer' when `ddf-log-events' is non-nil."
+(defun ddf-log (log-msg &optional echo)
+  "Write LOG-MSG to `ddf-log-buffer' when `ddf-log-events' is non-nil.
+When ECHO is non-nil, also display LOG-MSG in the echo area."
   (when ddf-log-events
     (with-current-buffer (get-buffer-create ddf-log-buffer)
       (special-mode)
@@ -104,7 +105,8 @@
       (goto-char (point-max))
       (insert (concat (format-time-string "[%F %R] ")
                       log-msg "\n"))
-      (setq-local buffer-read-only t))))
+      (setq-local buffer-read-only t)))
+  (when echo (message log-msg)))
 
 ;; NOTE 2024-11-11: adapted from `tempel--file-read',
 ;; see also `org-id-locations-load'
@@ -298,15 +300,19 @@ Replace target path if host defines something different from \"~/\"."
     (make-directory dir :parents)
     (ddf-log (format "Created directory: %s" dir))))
 
-;; REVIEW 2024-11-14: consider using relative names?
-;; (file-relative-name user-init-file user-emacs-directory)
 (defun ddf--make-symlink (dotfile)
   "Make symlink for DOTFILE.
-Overwrite existing symlink if `ddf-overwrite-symlinks' is non-nil, which see."
-  (when (not (f-symlink? (cdr dotfile)))
-    (make-symbolic-link (car dotfile) (cdr dotfile)
-                        ddf-overwrite-symlinks)
-    (ddf-log (format "Created symlink: %s" (cdr dotfile)))))
+Make a relative symlink if `ddf-symlinks-relative' is non-nil.
+Overwrite symlinks if `ddf-symlinks-overwrite' is non-nil, which see."
+  (let ((src (car dotfile))
+        (sym (cdr dotfile)))
+    (when (not (f-symlink? sym))
+      (make-symbolic-link (if ddf-symlinks-relative
+                              (file-relative-name src (f-dirname sym))
+                            src)
+                          sym
+                          ddf-symlinks-overwrite)
+      (ddf-log (format "Created symlink: %s" (cdr dotfile))))))
 
 (defun ddf--delete-directory (dir)
   "Delete the directory DIR (it must be empty)."
@@ -332,26 +338,26 @@ Overwrite existing symlink if `ddf-overwrite-symlinks' is non-nil, which see."
 
 (cl-defmethod ddf-uninstall-dotfiles ((host ddf-host))
   "Uninstall packages at HOST directory."
-  (let* ((dotfiles (ddf-host-dotfiles host))
-         (directories (ddf--dotfiles-dirs dotfiles))
-         (symlinks (ddf--dotfiles-symlinks dotfiles)))
-    (when dotfiles
-      (ddf-log (format "Uninstalling dotfiles for '%s'..."
-                       (ddf-host-name host)))
-      (mapc #'ddf--delete-symlink symlinks)
-      (mapc #'ddf--delete-directory directories))))
+  (when-let* ((dotfiles (ddf-host-dotfiles host))
+              (directories (ddf--dotfiles-dirs dotfiles))
+              (symlinks (ddf--dotfiles-symlinks dotfiles))
+              (host-name (ddf-host-name host)))
+    (ddf-log (format "Uninstalling dotfiles for '%s'..." host-name))
+    (mapc #'ddf--delete-symlink symlinks)
+    (mapc #'ddf--delete-directory directories)
+    (ddf-log (format "Dotfiles uninstalled for '%s'." host-name) :echo)))
 
 (cl-defmethod ddf-install-dotfiles ((host ddf-host))
   "Install packages at HOST directory."
   (ddf-uninstall-dotfiles host)
   (ddf--make-directory (ddf-host-dir host))
-  (let* ((dotfiles (ddf-host-dotfiles host))
-         (directories (ddf--dotfiles-dirs dotfiles)))
-    (when dotfiles
-      (ddf-log (format "Installing dotfiles for '%s'..."
-                       (ddf-host-name host)))
-      (mapc #'ddf--make-directory directories)
-      (mapc #'ddf--make-symlink dotfiles))))
+  (when-let* ((dotfiles (ddf-host-dotfiles host))
+              (directories (ddf--dotfiles-dirs dotfiles))
+              (host-name (ddf-host-name host)))
+    (ddf-log (format "Installing dotfiles for '%s'..." host-name))
+    (mapc #'ddf--make-directory directories)
+    (mapc #'ddf--make-symlink dotfiles)
+    (ddf-log (format "Dotfiles installed for '%s'." host-name) :echo)))
 
 
 ;;;; Commands
