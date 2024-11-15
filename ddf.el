@@ -256,9 +256,13 @@ When ECHO is non-nil, also display LOG-MSG in the echo area."
   (mapcar
    (lambda (f)
      (let ((src (if (stringp f) f (car f)))
-           (sym (if (stringp f) (f-filename f) (f-filename (cdr f)))))
+           (sym (if (stringp f) (f-filename f) (f-filename (cdr f))))
+           (sym-dir (if (stringp f) "" (f-dirname (cdr f)))))
        (cons (ddf--check-file (file-name-concat pkg-path src))
-             (file-name-concat target-path sym))))
+             (file-name-concat (if (string-match-p "^[~/]" sym-dir)
+                                   sym-dir
+                                 target-path)
+                               sym))))
    files))
 
 (defun ddf-pkg--globs (globs pkg-path target-path)
