@@ -300,6 +300,12 @@ When ECHO is non-nil, also display LOG-MSG in the echo area."
   (file-name-concat (ddf--check-value (ddf-host-dir host))
                     (ddf--check-value (ddf-host-env host))))
 
+(cl-defmethod ddf-host-pkg-list ((host ddf-host))
+  "Return the package declaration for HOST.
+If host :pkgs is nil. return all known packages."
+  (or (ddf-host-pkgs host)
+      (mapcar #'ddf-pkg-name ddf-pkg-list)))
+
 (cl-defmethod ddf-host-dotfiles ((host ddf-host))
   "Return an alist of all source files and links for HOST packages.
 Replace target path if host defines something different from \"~/\"."
@@ -310,7 +316,7 @@ Replace target path if host defines something different from \"~/\"."
                                             (cdr s))))
           (mapcan #'ddf-pkg-dotfiles
                   (mapcar (lambda (p) (ddf-get 'pkg p))
-                          (ddf--check-list (ddf-host-pkgs host))))))
+                          (ddf--check-list (ddf-host-pkg-list host))))))
 
 
 ;;;; Dotfiles installation
