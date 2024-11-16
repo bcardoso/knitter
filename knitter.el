@@ -318,9 +318,10 @@ If host :pkgs is nil. return all known packages."
 Replace target path if host defines something different from \"~/\"."
   (mapcar (lambda (s)
             (cons (car s)
-                  (replace-regexp-in-string "^~"
-                                            (knitter-host-dir host)
-                                            (cdr s))))
+                  (replace-regexp-in-string
+                   "^~/"
+                   (file-name-as-directory (knitter-host-dir host))
+                   (cdr s))))
           (mapcan #'knitter-pkg-dotfiles
                   (mapcar (lambda (p)
                             (knitter-get 'pkg p))
