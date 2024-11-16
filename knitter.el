@@ -363,9 +363,10 @@ Overwrite symlinks if `knitter-symlinks-overwrite' is non-nil, which see."
 
 (defun knitter--delete-directory (dir)
   "Delete the directory DIR (it must be empty)."
-  (when (and (f-directory? dir) (directory-empty-p dir))
+  (while (and (f-directory? dir) (directory-empty-p dir))
     (delete-directory dir)
-    (knitter-log (format "Deleted directory: %s" dir))))
+    (knitter-log (format "Deleted directory: %s" dir))
+    (setq dir (f-dirname dir))))
 
 (defun knitter--delete-symlink (symlink)
   "Delete SYMLINK."
