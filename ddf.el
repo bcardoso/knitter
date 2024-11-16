@@ -326,6 +326,14 @@ Replace target path if host defines something different from \"~/\"."
                   (mapcar (lambda (p) (ddf-get 'pkg p))
                           (ddf--check-list (ddf-host-pkg-list host))))))
 
+(defun ddf-host--with-pkg (&optional host-name pkg-name)
+  "Overwrite HOST-NAME :pkgs list with PKG-NAME."
+  (let ((host (if host-name (ddf-get 'host host-name) (ddf-read 'host))))
+    (setf (ddf-host-pkgs host)
+          (list (or pkg-name (ddf-pkg-name (ddf-read 'pkg)))))
+    (ddf-load)
+    host))
+
 
 ;;;; Dotfiles installation
 
@@ -394,52 +402,30 @@ Overwrite symlinks if `ddf-symlinks-overwrite' is non-nil, which see."
     (mapc #'ddf--make-symlink dotfiles)
     (ddf-log (format "Dotfiles installed for '%s'." host-name) :echo)))
 
-(defun ddf-host-with-pkg (&optional host-name pkg-name)
-  "Overwrite HOST-NAME :pkgs list with PKG-NAME."
-  (let ((host (if host-name (ddf-get 'host host-name) (ddf-read 'host))))
-    (setf (ddf-host-pkgs host)
-          (list (or pkg-name (ddf-pkg-name (ddf-read 'pkg)))))
-    (ddf-load)
-    host))
-
 
 ;;;; Commands
 
-(defun ddf-do (action &optional arg)
-  "Dired for dotfiles. With ARG, reload packages."
-  (interactive "P")
-  (when (or arg (not ddf-pkg-list)) (ddf-load))
-  (pcase action
-    ('dired
-     (dired (expand-file-name (ddf-pkg-name (ddf-read 'pkg))
-                              ddf-directory)))
-    ('install
-     (ddf-install-dotfiles
-      (if arg (ddf-host-with-pkg) (ddf-read 'host))))
-    ('uninstall
-     (ddf-uninstall-dotfiles
-      (if arg (ddf-host-with-pkg) (ddf-read 'host))))))
-
-
 ;;;###autoload
-(defun ddf-dired (&optional arg)
-  "Dired for dotfiles. With ARG, reload packages."
-  (interactive "P")
-  (ddf-do 'dired arg))
-
-;;;###autoload
-(defun ddf-install (&optional arg)
-  "Install dotfiles for a host.
-With ARG, also prompt for a specific package."
-  (interactive "P")
-  (ddf-do 'install arg))
-
-;;;###autoload
-(defun ddf-uninstall (&optional arg)
-  "Uninstall dotfiles for a host.
-With ARG, also prompt for a specific package."
+(defun ddf-dired ()
+  "Dired for dotfiles."
   (interactive)
-  (ddf-do 'uninstall arg))
+  (ddf-reload)
+  (dired
+   (file-name-concat ddf-directory (ddf-pkg-name (ddf-read 'pkg)))))
+
+;;;###autoload
+(defun ddf-install (&optional host-name pkg-name)
+  "Install dotfiles for a host."
+  (interactive)
+  (ddf-reload)
+  (ddf-install-dotfiles (ddf-host--with-pkg host-name pkg-name)))
+
+;;;###autoload
+(defun ddf-uninstall (&optional host-name pkg-name)
+  "Uninstall dotfiles for a host."
+  (interactive)
+  (ddf-reload)
+  (ddf-uninstall-dotfiles (ddf-host--with-pkg host-name pkg-name)))
 
 
 ;;; Provide
