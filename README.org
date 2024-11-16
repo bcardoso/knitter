@@ -1,0 +1,128 @@
+#+AUTHOR: Bruno Cardoso <cardoso.bc@gmail.com>
+#+DATE: 2024-11-11
+#+STARTUP: indent content
+#+FILETAGS: github knitter
+
+* =knitter=
+
+A simple declarative dotfiles manager written in Emacs Lisp.
+
+** Motivation
+
+I wanted some way to manage my dotfiles symlinks from an arbitrary directory structure.
+
+For quite some time I have been using a custom organization for my files but manually creating and maintaining the symlinks, which sometimes get broken or I might forget about them at all.
+
+=knitter.el= provides a way for explicitly declaring "packages" (groups of source files and their target locations) to be installed at "hosts" (directory roots or a "stow directory").
+
+
+** Usage
+
+*** Basic setup
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/knitter")
+(require 'knitter)
+(setopt knitter-directory "~/dotfiles")
+(setopt knitter-packages "~/dotfiles/packages.eld")
+#+end_src
+
+- knitter-directory :: Your ~~/dotfiles~ directory
+
+- knitter-packages :: A ~packages.eld~ containing all hosts and packages declarations within the dotfiles directory
+
+*** Commands
+
+- knitter-dired :: Open a package in Dired
+- knitter-install :: Install packages for a host.
+- knitter-uninstall :: Uninstall packages for a host.
+
+*** User options
+
+=M-x customize-group RET knitter= for the relevant user options.
+
+*** Warning
+
+=knitter= is in early versions and edge cases may not have been properly tested.
+
+There might be bugs.
+
+Please [[https://github.com/bcardoso/knitter/issues][report an issue]] if you find any.
+
+
+** The =packages.eld= format
+
+*** Sample file
+
+#+begin_src emacs-lisp
+;; -*- mode: lisp-data; outline-regexp: "([a-z]"; -*-
+
+;;; Hosts
+
+(host :name "home" ;; Host identifier
+      :dir  "~/"   ;; Directory root, default is "~/"
+      :env  "bin"  ;; Path directory, default is "bin", so it means "~/bin"
+      :pkgs (dunst shell)) ;; Package list
+
+;; Minimal package declaration
+;; As :pkgs is omitted, all known packages will be installed at host's :dir
+(host :name "test-host" :dir "/tmp/test-host")
+
+
+;;; Packages
+
+;; Minimal package declaration
+;; as :files and :globs are optional, this will symlink the target directory
+(pkg :name "dunst"              ;; Package identifier
+     :target "~/.config/dunst") ;; Target location
+
+;; :files can be a list of files to be symlinked at target dir
+(pkg :name "emacs"
+     :target "~/.emacs.d"
+     :files ("early-init.el" "init.el" "config.org"))
+
+;; :globs can be file wildcards to be symlinked at some location
+(pkg :name "mpd"
+     :target "~/.config/mpd"
+     :files ("mpd.conf")
+     ;; :globs ("*.sh") ;; This is the same as the alist bellow
+     :globs ((".*sh" . "~/bin")))
+
+;; Renaming symlinks
+;; :files can be a list of files or an alist of (file . symlink) names
+(pkg :name "shell"
+     :target "~/"
+     :files (("bashrc"       . ".bashrc")
+             ("bash_profile" . ".bash_profile"))
+     ;; This is also valid, so only 'bashrc' will be renamed:
+     ;; :files (".Xresources" ("bashrc" . ".bashrc"))
+     )
+#+end_src
+
+*** Rules
+
+- Any package =:name= must be an existing folder within =knitter-directory=.
+
+- Only packages listed in a host's =:pkgs= slot will be installed. Although, if the =:pkgs= slot is empty then *all known packages* will be installed.
+
+- In any package declaration (=:target=, =:files=, =:globs=), the directory part =~/= is in fact just a placeholder: it will be replaced by the host's directory root declared in its =:dir= slot.
+
+  - In the example above, for host "test-host", the "dunst" package will be installed as a symlink at "/tmp/test-host/.config".
+
+- =knitter= will throw user-errors when source files are not found and when it cannot create the necessary files. It will try and ask to replace symlinks, but it won't replace regular files or directories.
+
+- =knitter= will only delete symlinks and *empty* directories.
+
+*** Log buffer
+
+All symlinks and directories created or deleted will be logged at =knitter-log-buffer= (~*knitter-log*~) if =knitter-log-events= variable is non-nil (the default).
+
+
+** Related software
+
+If =knitter= is too simple or too quirky for you, there are other well-known and feature-rich dotfiles managers out there:
+
+- [[https://www.gnu.org/software/stow/][GNU Stow]]: Symlink farm manager
+- [[https://yadm.io/][yadm]]: Yet Another Dotfiles Manager
+- [[https://www.chezmoi.io/][chezmoi]]: Manage your dotfiles across multiple diverse machines, securely.
+- [[https://github.com/shemnei/punktf][punktf]]: A cross-platform multi-target dotfiles manager.
