@@ -107,7 +107,7 @@ Please [[https://github.com/bcardoso/knitter/issues][report an issue]] if you fi
 
 - In any package declaration (=:target=, =:files=, =:globs=), the directory part =~/= is in fact just a placeholder: it will be replaced by the host's directory root declared in its =:dir= slot.
 
-  - In the example above, for host "test-host", the "dunst" package will be installed as a symlink at "/tmp/test-host/.config".
+  - In the example above, for host =test-host=, the "dunst" package will be installed as a symlink at =/tmp/test-host/.config=.
 
 - =knitter= will throw user-errors when source files are not found and when it cannot create the necessary files. It will try and ask to replace symlinks, but it won't replace regular files or directories.
 
