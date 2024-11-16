@@ -166,8 +166,16 @@ When ECHO is non-nil, also display LOG-MSG in the echo area."
               ('host (push (ddf--load-host form) ddf-host-list))
               ('pkg  (push (ddf--load-pkg form)  ddf-pkg-list)))))
         (reverse (ddf--file-read ddf-packages)))
+  (put 'ddf-pkg-list 'last-update (f-modification-time ddf-packages))
   (ddf-log (format "Loaded %s host(s) and %s packages."
                    (length ddf-host-list) (length ddf-pkg-list))))
+
+(defun ddf-reload ()
+  "Reload `ddf-packages' if needed."
+  (when (or (not ddf-pkg-list)
+            (time-less-p (get 'ddf-pkg-list 'last-update)
+                         (f-modification-time ddf-packages)))
+    (ddf-load)))
 
 (defun ddf-get (type name)
   "Return struct of TYPE by NAME."
