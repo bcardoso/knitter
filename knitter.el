@@ -407,8 +407,32 @@ Overwrite symlinks if `knitter-symlinks-overwrite' is non-nil, which see."
     (mapc #'knitter--make-symlink dotfiles)
     (knitter-log (format "Dotfiles installed for '%s'." host-name) :echo)))
 
+(defun knitter-do (action &optional host-name pkg-name prompt)
+  "Do ACTION for HOST-NAME and PKG-NAME."
+  (knitter-reload)
+  (funcall action
+           (if (or prompt (and host-name pkg-name))
+               (knitter-host--with-pkg host-name pkg-name)
+             (knitter-read 'host))))
+
 
 ;;;; Commands
+
+;;;###autoload
+(defun knitter-install (&optional host-name pkg-name)
+  "Install dotfiles for a host.
+With \\[universal-argument] prefix, prompt for a specific package."
+  (interactive)
+  (knitter-do #'knitter-install-dotfiles
+              host-name pkg-name current-prefix-arg))
+
+;;;###autoload
+(defun knitter-uninstall (&optional host-name pkg-name)
+  "Uninstall dotfiles for a host.
+With \\[universal-argument] prefix, prompt for a specific package."
+  (interactive)
+  (knitter-do #'knitter-uninstall-dotfiles
+              host-name pkg-name current-prefix-arg))
 
 ;;;###autoload
 (defun knitter-dired ()
@@ -417,20 +441,6 @@ Overwrite symlinks if `knitter-symlinks-overwrite' is non-nil, which see."
   (knitter-reload)
   (dired (file-name-concat knitter-directory
                            (knitter-pkg-name (knitter-read 'pkg)))))
-
-;;;###autoload
-(defun knitter-install (&optional host-name pkg-name)
-  "Install dotfiles for a host."
-  (interactive)
-  (knitter-reload)
-  (knitter-install-dotfiles (knitter-host--with-pkg host-name pkg-name)))
-
-;;;###autoload
-(defun knitter-uninstall (&optional host-name pkg-name)
-  "Uninstall dotfiles for a host."
-  (interactive)
-  (knitter-reload)
-  (knitter-uninstall-dotfiles (knitter-host--with-pkg host-name pkg-name)))
 
 
 ;;; Provide
