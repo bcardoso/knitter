@@ -27,15 +27,15 @@ For quite some time I have been using a custom organization for my files but man
 (setopt knitter-packages "~/dotfiles/packages.eld")
 #+end_src
 
-- knitter-directory :: Your ~~/dotfiles~ directory
+- knitter-directory :: Your =~/dotfiles= directory
 
-- knitter-packages :: A ~packages.eld~ containing all hosts and packages declarations within the dotfiles directory
+- knitter-packages :: A =packages.eld= containing all hosts and packages declarations within the dotfiles directory
 
 *** Commands
 
-- knitter-dired :: Open a package in Dired
 - knitter-install :: Install packages for a host.
 - knitter-uninstall :: Uninstall packages for a host.
+- knitter-dired :: Open a package in Dired
 
 *** User options
 
