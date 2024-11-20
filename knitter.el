@@ -229,7 +229,7 @@ When ECHO is non-nil, also display LOG-MSG in the echo area."
 (defun knitter--check-pkg-name (package)
   "Check if PACKAGE is valid and return it."
   (thread-last package
-               (knitter--check-name)
+               (knitter--check-value)
                (knitter--check-file)))
 
 ;; NOTE 2024-11-14: unused
